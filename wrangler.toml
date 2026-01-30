@@ -1,0 +1,7 @@
+name = "effect-kv"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "TEST_KV"
+id = "test-kv-namespace"
