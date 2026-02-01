@@ -57,7 +57,9 @@ export interface TypedKV<V> {
  * const user = yield* UserKV.get("user:123"); // Option<{ id: number, name: string }>
  * ```
  */
-export const makeTypedKV = <V>(schema: Schema.Schema<V>): Effect.Effect<TypedKV<V>, never, KV> =>
+export const makeTypedKV = <V>(
+  schema: Schema.Schema<V>
+): Effect.Effect<TypedKV<V>, never, 'effect-kv/KV'> =>
   Effect.gen(function* () {
     const kv = yield* KV;
 

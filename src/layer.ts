@@ -190,7 +190,7 @@ const makeKVService = (namespace: KVNamespace): KVService => ({
  * Live Layer implementation using a real KVNamespace
  * Expects KVNamespaceBinding to be provided in context
  */
-export const KVLive: Layer.Layer<KV, never, KVNamespaceBinding> = Layer.effect(
+export const KVLive = Layer.effect(
   KV,
   Effect.gen(function* () {
     const namespace = yield* KVNamespaceBinding;
@@ -203,12 +203,12 @@ export const KVLive: Layer.Layer<KV, never, KVNamespaceBinding> = Layer.effect(
  * Use this when you have a direct reference to a KVNamespace (e.g., from env)
  * @param namespace - The KVNamespace to wrap
  */
-export const layerFromNamespace = (namespace: KVNamespace): Layer.Layer<KV> =>
+export const layerFromNamespace = (namespace: KVNamespace) =>
   Layer.succeed(KV, makeKVService(namespace));
 
 /**
  * Test Layer that uses a mock KVNamespace
  * Useful for testing without actual Cloudflare bindings
  */
-export const KVTest = (mockNamespace: KVNamespace): Layer.Layer<KV> =>
+export const KVTest = (mockNamespace: KVNamespace) =>
   Layer.succeed(KV, makeKVService(mockNamespace));

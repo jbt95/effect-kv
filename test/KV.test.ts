@@ -1,6 +1,6 @@
 import { Effect, Option, Schema } from 'effect';
 import { describe, expect, it, beforeEach } from 'vitest';
-import { KV, KVTest, makeTypedKV } from '../src/index.js';
+import { KV, KVTest } from '../src';
 import type { KVNamespace } from '@cloudflare/workers-types';
 
 // Mock KV namespace for unit testing
@@ -239,7 +239,7 @@ describe('Schema Validation', () => {
 
   it('should validate and store typed data', async () => {
     const program = Effect.gen(function* () {
-      const typedKV = yield* makeTypedKV(UserSchema);
+      const typedKV = yield* KV(UserSchema);
       const user: User = { id: 123, name: 'Alice', email: 'alice@example.com' };
       yield* typedKV.put('user:123', user);
       const result = yield* typedKV.get('user:123');
@@ -253,7 +253,7 @@ describe('Schema Validation', () => {
 
   it('should return None for non-existent keys', async () => {
     const program = Effect.gen(function* () {
-      const typedKV = yield* makeTypedKV(UserSchema);
+      const typedKV = yield* KV(UserSchema);
       const result = yield* typedKV.get('user:nonexistent');
       return result;
     });

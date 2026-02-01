@@ -1,6 +1,8 @@
-import { Context, Effect, Option } from 'effect';
+import { Context, Effect, Option, Schema } from 'effect';
 import { KVDeleteError, KVGetError, KVListError, KVPutError, type KVError } from './errors.js';
 import type { GetOptions, KVValue, ListOptions, ListResult, PutOptions } from './types.js';
+import type { TypedKV } from './schema.js';
+import { makeTypedKV } from './schema.js';
 
 /**
  * KV Service interface providing type-safe key-value operations
@@ -109,6 +111,32 @@ export interface KVService {
 }
 
 /**
- * Context tag for the KV Service
+ * Context tag for the KV Service with callable schema support
+ * @example
+ * ```typescript
+ * // Basic string-based KV operations (default)
+ * const kv = yield* KV
+ * yield* kv.put('key', 'value')
+ * const value = yield* kv.get('key') // Option<string>
+ *
+ * // Schema-validated JSON operations
+ * const UserSchema = Schema.Struct({ id: Schema.Number, name: Schema.String })
+ * const userKV = yield* KV(UserSchema)
+ * yield* userKV.put('user:1', { id: 1, name: 'Alice' })
+ * const user = yield* userKV.get('user:1') // Option<{ id: number, name: string }>
+ * ```
  */
-export class KV extends Context.Tag('effect-kv/KV')<KV, KVService>() {}
+const KVTag = Context.Tag('effect-kv/KV')<'effect-kv/KV', KVService>();
+
+// Create callable function that delegates to makeTypedKV
+const KVCallable = <V>(
+  schema: Schema.Schema<V>
+): Effect.Effect<TypedKV<V>, never, 'effect-kv/KV'> => makeTypedKV(schema);
+
+// Copy all tag properties to the callable function
+Object.setPrototypeOf(KVCallable, Object.getPrototypeOf(KVTag));
+Object.defineProperties(KVCallable, Object.getOwnPropertyDescriptors(KVTag));
+
+export const KV = KVCallable as Context.Tag<'effect-kv/KV', KVService> & {
+  <V>(schema: Schema.Schema<V>): Effect.Effect<TypedKV<V>, never, 'effect-kv/KV'>;
+};

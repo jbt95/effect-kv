@@ -11,25 +11,44 @@
  *
  * @example
  * ```typescript
- * import { Effect } from 'effect'
- * import { KV, KVLive, layerFromNamespace } from 'effect-kv'
+ * import { Effect, Schema } from 'effect'
+ * import { KV, KVTest, layerFromNamespace } from 'effect-kv'
  *
- * // In a Worker handler
- * const program = Effect.gen(function* () {
+ * // Basic string-based KV operations
+ * const basicProgram = Effect.gen(function* () {
  *   const kv = yield* KV
  *
- *   // Store a value
+ *   // Store a string value
  *   yield* kv.put('key', 'value', { expirationTtl: 3600 })
  *
  *   // Retrieve a value
- *   const value = yield* kv.get('key')
+ *   const value = yield* kv.get('key') // Option<string>
  *
  *   return value
  * })
  *
+ * // Schema-validated JSON operations
+ * const UserSchema = Schema.Struct({
+ *   id: Schema.Number,
+ *   name: Schema.String,
+ *   email: Schema.String,
+ * })
+ *
+ * const typedProgram = Effect.gen(function* () {
+ *   const userKV = yield* KV(UserSchema)
+ *
+ *   // Store validated user data
+ *   yield* userKV.put('user:123', { id: 123, name: 'Alice', email: 'alice@example.com' })
+ *
+ *   // Retrieve validated user
+ *   const user = yield* userKV.get('user:123') // Option<{ id: number, name: string, email: string }>
+ *
+ *   return user
+ * })
+ *
  * // Provide the layer and run
  * const result = await Effect.runPromise(
- *   program.pipe(Effect.provide(layerFromNamespace(env.KV_NAMESPACE)))
+ *   typedProgram.pipe(Effect.provide(layerFromNamespace(env.KV_NAMESPACE)))
  * )
  * ```
  */

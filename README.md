@@ -63,7 +63,7 @@ export default {
 
 ```typescript
 import { Effect, Schema } from 'effect';
-import { KV, layerFromNamespace, makeTypedKV } from 'effect-kv';
+import { KV, layerFromNamespace } from 'effect-kv';
 
 const UserSchema = Schema.Struct({
   id: Schema.Number,
@@ -74,7 +74,8 @@ const UserSchema = Schema.Struct({
 type User = Schema.Schema.Type<typeof UserSchema>;
 
 const program = Effect.gen(function* () {
-  const userKV = yield* makeTypedKV(UserSchema);
+  // Pass schema to KV for type-safe JSON operations
+  const userKV = yield* KV(UserSchema);
 
   // Type-safe put - validates at runtime
   yield* userKV.put('user:123', {
@@ -131,7 +132,17 @@ const program = Effect.gen(function* () {
 
 ## API Reference
 
-### Core Operations
+### Basic Usage (String Key-Values)
+
+Use `yield* KV` for default string-based operations:
+
+```typescript
+const kv = yield * KV;
+
+// Store and retrieve strings
+yield * kv.put('key', 'value');
+const value = yield * kv.get('key'); // Option<string>
+```
 
 #### `KV.get(key, options?)`
 
@@ -175,11 +186,41 @@ Gets value or fails with `KeyNotFoundError`. Returns `Effect<string, KVError>`.
 
 Gets value or returns default. Returns `Effect<string, KVError>`.
 
-### Schema Operations
+### Schema-Validated JSON Operations
+
+Use `yield* KV(Schema)` for type-safe JSON operations with runtime validation:
+
+```typescript
+const UserSchema = Schema.Struct({
+  id: Schema.Number,
+  name: Schema.String,
+});
+
+const userKV = yield * KV(UserSchema);
+
+// Store validated user
+yield * userKV.put('user:1', { id: 1, name: 'Alice' });
+
+// Retrieve validated user
+const user = yield * userKV.get('user:1'); // Option<{ id: number, name: string }>
+```
+
+#### `KV(schema)`
+
+Creates a type-safe KV wrapper for the given schema. Returns `Effect<TypedKV<V>, never, KV>`.
+
+The returned `TypedKV<V>` has these methods:
+
+- `get(key)` - Returns `Effect<Option<V>, KVError>`
+- `put(key, value, options?)` - Returns `Effect<void, KVError>`
+- `getOrFail(key)` - Returns `Effect<V, KVError>`
+- `getOrElse(key, defaultValue)` - Returns `Effect<V, KVError>`
 
 #### `makeTypedKV(schema)`
 
-Creates a type-safe KV wrapper. Returns `Effect<TypedKV<V>, never, KV>`.
+Alternative to `KV(schema)`. Creates a type-safe KV wrapper. Returns `Effect<TypedKV<V>, never, KV>`.
+
+> **Note:** `makeTypedKV` is kept for backwards compatibility. The recommended approach is `yield* KV(Schema)`.
 
 ## Testing
 
